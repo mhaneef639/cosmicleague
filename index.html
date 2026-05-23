@@ -259,22 +259,22 @@
         <form class="apply-form" id="applyForm" novalidate>
           <div class="form-field">
             <label for="fullName">Full Name <span class="req">*</span></label>
-            <input type="text" id="fullName" name="fullName" placeholder="Your full name" autocomplete="name" required>
+            <input type="text" id="fullName" name="fullName" placeholder="Your full name" autocomplete="name" maxlength="100" required>
             <span class="field-error" id="fullNameError"></span>
           </div>
           <div class="form-field">
             <label for="profession">What You Do <span class="req">*</span></label>
-            <input type="text" id="profession" name="profession" placeholder="Your role, specialty, or title" required>
+            <input type="text" id="profession" name="profession" placeholder="Your role, specialty, or title" maxlength="150" required>
             <span class="field-error" id="professionError"></span>
           </div>
           <div class="form-field">
             <label for="email">Email Address <span class="req">*</span></label>
-            <input type="email" id="email" name="email" placeholder="Where we can reach you" autocomplete="email" required>
+            <input type="email" id="email" name="email" placeholder="Where we can reach you" autocomplete="email" maxlength="254" required>
             <span class="field-error" id="emailError"></span>
           </div>
           <div class="form-field">
             <label for="reason">Why Are You Seeking Coaching? <span class="req">*</span></label>
-            <textarea id="reason" name="reason" rows="6" placeholder="What brings you here. The more honest and specific, the better." required></textarea>
+            <textarea id="reason" name="reason" rows="6" placeholder="What brings you here. The more honest and specific, the better." maxlength="5000" required></textarea>
             <span class="field-error" id="reasonError"></span>
           </div>
           <div class="form-submit-row">

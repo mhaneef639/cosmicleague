@@ -75,10 +75,10 @@ const formSucess = document.getElementById('formSuccess');
 const submitBtn  = document.getElementById('submitBtn');
 
 const FIELDS = [
-  { id: 'fullName',   msg: 'Please enter your full name.'            },
-  { id: 'profession', msg: 'Please describe what you do.'            },
-  { id: 'email',      msg: 'Please enter a valid email address.',  type: 'email' },
-  { id: 'reason',     msg: 'Please tell us why you are seeking coaching.' },
+  { id: 'fullName',   msg: 'Please enter your full name.',                 max: 100,  maxMsg: 'Full name is too long (max 100 characters).' },
+  { id: 'profession', msg: 'Please describe what you do.',                 max: 150,  maxMsg: 'This field is too long (max 150 characters).' },
+  { id: 'email',      msg: 'Please enter a valid email address.', type: 'email', max: 254, maxMsg: 'Email address is too long.' },
+  { id: 'reason',     msg: 'Please tell us why you are seeking coaching.', max: 5000, maxMsg: 'Message is too long (max 5000 characters).' },
 ];
 
 // Live clear on input
@@ -91,19 +91,34 @@ FIELDS.forEach(({ id }) => {
 
 function validate() {
   let ok = true;
-  FIELDS.forEach(({ id, msg, type }) => {
+  let firstInvalid = null;
+
+  FIELDS.forEach(({ id, msg, type, max, maxMsg }) => {
     const el  = document.getElementById(id);
     const err = document.getElementById(id + 'Error');
     const val = el.value.trim();
-    const invalid =
-      !val ||
-      (type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val));
-    if (invalid) {
+
+    let errorText = '';
+    if (!val) {
+      errorText = msg;
+    } else if (type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+      errorText = msg;
+    } else if (max && val.length > max) {
+      errorText = maxMsg;
+    }
+
+    if (errorText) {
       el.classList.add('invalid');
-      err.textContent = msg;
+      err.textContent = errorText;
+      if (!firstInvalid) firstInvalid = el;
       ok = false;
     }
   });
+
+  if (firstInvalid) {
+    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    firstInvalid.focus({ preventScroll: true });
+  }
   return ok;
 }
 
