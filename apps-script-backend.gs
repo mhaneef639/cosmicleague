@@ -21,6 +21,8 @@
 //  WHAT THIS DOES
 //  ---------------
 //  • Receives form submissions via HTTP POST from the website
+//  • Validates fields (required, length limits, email format)
+//  • Rate limits to MAX_PER_MINUTE submissions per minute (global)
 //  • Appends each application as a row in a Google Sheet
 //    (created automatically on first submission)
 //  • Sends you an email notification for every new application
@@ -32,10 +34,34 @@
 const NOTIFICATION_EMAIL = 'dr.haneefmo@gmail.com';
 const SHEET_NAME          = 'Applications';
 
+// ── Field length limits (characters) ───────────────────────────
+const MAX_LENGTHS = {
+  fullName:   100,
+  profession: 150,
+  email:      254,   // RFC max email length
+  reason:    5000,   // generous, but stops abuse
+};
+
+// ── Rate limit: max submissions per minute (global) ────────────
+const MAX_PER_MINUTE = 5;
+
 // ── POST handler — called by the website form ──────────────────
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
+
+    // 1. Validate input
+    const validationError = validate(data);
+    if (validationError) {
+      return respond({ success: false, error: validationError });
+    }
+
+    // 2. Check rate limit
+    if (!withinRateLimit()) {
+      return respond({ success: false, error: 'Too many submissions. Please try again later.' });
+    }
+
+    // 3. Save and notify
     const ssId = saveToSheet(data);
     sendEmailNotification(data, ssId);
     return respond({ success: true });
@@ -47,6 +73,44 @@ function doPost(e) {
 // ── GET handler — health check ─────────────────────────────────
 function doGet() {
   return respond({ status: 'Cosmic League backend is active.' });
+}
+
+// ── Validate submitted data ────────────────────────────────────
+function validate(data) {
+  // All fields required
+  if (!data.fullName || !data.profession || !data.email || !data.reason) {
+    return 'All fields are required.';
+  }
+
+  // Trim whitespace before checking length
+  for (const field in MAX_LENGTHS) {
+    const value = String(data[field] || '').trim();
+    if (value.length === 0) return `Field "${field}" cannot be empty.`;
+    if (value.length > MAX_LENGTHS[field]) {
+      return `Field "${field}" exceeds maximum length of ${MAX_LENGTHS[field]} characters.`;
+    }
+  }
+
+  // Email format check
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(String(data.email).trim())) {
+    return 'Invalid email address.';
+  }
+
+  return null;
+}
+
+// ── Rate limit using CacheService ──────────────────────────────
+function withinRateLimit() {
+  const cache = CacheService.getScriptCache();
+  const key   = 'submission_count';
+  const count = parseInt(cache.get(key) || '0', 10);
+
+  if (count >= MAX_PER_MINUTE) return false;
+
+  // Cache entry expires after 60 seconds
+  cache.put(key, String(count + 1), 60);
+  return true;
 }
 
 // ── Get or create the spreadsheet ─────────────────────────────
@@ -81,10 +145,10 @@ function saveToSheet(data) {
 
   sheet.appendRow([
     new Date(),
-    data.fullName   || '',
-    data.profession || '',
-    data.email      || '',
-    data.reason     || '',
+    String(data.fullName).trim(),
+    String(data.profession).trim(),
+    String(data.email).trim(),
+    String(data.reason).trim(),
   ]);
 
   return ss.getId();
