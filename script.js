@@ -78,6 +78,7 @@ const FIELDS = [
   { id: 'fullName',   msg: 'Please enter your full name.',                 max: 100,  maxMsg: 'Full name is too long (max 100 characters).' },
   { id: 'profession', msg: 'Please describe what you do.',                 max: 150,  maxMsg: 'This field is too long (max 150 characters).' },
   { id: 'email',      msg: 'Please enter a valid email address.', type: 'email', max: 254, maxMsg: 'Email address is too long.' },
+  { id: 'whatsapp',   msg: 'Please enter your WhatsApp number with country code, digits only (e.g. 966544030203).', type: 'phone', max: 15, maxMsg: 'Phone number is too long.' },
   { id: 'reason',     msg: 'Please tell us why you are seeking coaching.', max: 5000, maxMsg: 'Message is too long (max 5000 characters).' },
 ];
 
@@ -102,6 +103,8 @@ function validate() {
     if (!val) {
       errorText = msg;
     } else if (type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+      errorText = msg;
+    } else if (type === 'phone' && !/^\d{8,15}$/.test(val)) {
       errorText = msg;
     } else if (max && val.length > max) {
       errorText = maxMsg;
@@ -137,6 +140,7 @@ form.addEventListener('submit', async (e) => {
     fullName:   document.getElementById('fullName').value.trim(),
     profession: document.getElementById('profession').value.trim(),
     email:      document.getElementById('email').value.trim(),
+    whatsapp:   document.getElementById('whatsapp').value.trim(),
     reason:     document.getElementById('reason').value.trim(),
   };
 

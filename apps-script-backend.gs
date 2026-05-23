@@ -39,6 +39,7 @@ const MAX_LENGTHS = {
   fullName:   100,
   profession: 150,
   email:      254,   // RFC max email length
+  whatsapp:    15,   // ITU-T E.164 max digits
   reason:    5000,   // generous, but stops abuse
 };
 
@@ -78,7 +79,7 @@ function doGet() {
 // ── Validate submitted data ────────────────────────────────────
 function validate(data) {
   // All fields required
-  if (!data.fullName || !data.profession || !data.email || !data.reason) {
+  if (!data.fullName || !data.profession || !data.email || !data.whatsapp || !data.reason) {
     return 'All fields are required.';
   }
 
@@ -95,6 +96,12 @@ function validate(data) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(String(data.email).trim())) {
     return 'Invalid email address.';
+  }
+
+  // WhatsApp number format: 8-15 digits only, country code included
+  const phoneRegex = /^\d{8,15}$/;
+  if (!phoneRegex.test(String(data.whatsapp).trim())) {
+    return 'Invalid WhatsApp number. Digits only, including country code.';
   }
 
   return null;
@@ -138,8 +145,8 @@ function saveToSheet(data) {
 
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
-    const headers = [['Timestamp', 'Full Name', 'Profession / Role', 'Email', 'Reason for Coaching']];
-    sheet.getRange(1, 1, 1, 5).setValues(headers).setFontWeight('bold');
+    const headers = [['Timestamp', 'Full Name', 'Profession / Role', 'Email', 'WhatsApp', 'Reason for Coaching']];
+    sheet.getRange(1, 1, 1, 6).setValues(headers).setFontWeight('bold');
     sheet.setFrozenRows(1);
   }
 
@@ -148,6 +155,7 @@ function saveToSheet(data) {
     String(data.fullName).trim(),
     String(data.profession).trim(),
     String(data.email).trim(),
+    String(data.whatsapp).trim(),
     String(data.reason).trim(),
   ]);
 
@@ -170,6 +178,7 @@ function sendEmailNotification(data, ssId) {
     `Full Name:   ${data.fullName   || '—'}\n` +
     `Profession:  ${data.profession || '—'}\n` +
     `Email:       ${data.email      || '—'}\n` +
+    `WhatsApp:    ${data.whatsapp   || '—'}\n` +
     `────────────────────────────────\n\n` +
     `Why they are seeking coaching:\n\n${data.reason || '—'}\n\n` +
     `────────────────────────────────\n` +
