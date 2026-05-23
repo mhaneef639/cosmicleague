@@ -8,7 +8,7 @@
    See apps-script-backend.gs for step-by-step instructions.
    ============================================================ */
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby4vZGeaxisA6RqkjXRL243CqRsHMUziuAhMLwTqYbUWstLYxepoh3hjM1gNLOtcYkg4A/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxs7AIXHMbNKljcAHx0v-Z1Wa6bmlSztQ1PP95VOY3u7pRUxXeGBH3aSmR3dagdaXxv/exec';
 
 /* ── Navigation ─────────────────────────────────────────────── */
 
