@@ -21,12 +21,12 @@
 //  WHAT THIS DOES
 //  ---------------
 //  • Receives form submissions via HTTP POST from the website
-//  • Appends each application as a row in the linked Google Sheet
+//  • Appends each application as a row in a Google Sheet
+//    (created automatically on first submission)
 //  • Sends you an email notification for every new application
 //
 //  To view submissions:
-//  Open the Apps Script project → Extensions → Sheets (or go to
-//  the Google Sheet that was automatically linked to this project)
+//  Go to Google Drive and look for "Cosmic League – Applications"
 // ================================================================
 
 const NOTIFICATION_EMAIL = 'dr.haneefmo@gmail.com';
@@ -36,10 +36,8 @@ const SHEET_NAME          = 'Applications';
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-
-    saveToSheet(data);
-    sendEmailNotification(data);
-
+    const ssId = saveToSheet(data);
+    sendEmailNotification(data, ssId);
     return respond({ success: true });
   } catch (err) {
     return respond({ success: false, error: err.message });
@@ -51,9 +49,27 @@ function doGet() {
   return respond({ status: 'Cosmic League backend is active.' });
 }
 
+// ── Get or create the spreadsheet ─────────────────────────────
+function getSpreadsheet() {
+  const props = PropertiesService.getScriptProperties();
+  const ssId  = props.getProperty('SHEET_ID');
+
+  if (ssId) {
+    try {
+      return SpreadsheetApp.openById(ssId);
+    } catch (e) {
+      // Sheet was deleted — fall through and create a new one
+    }
+  }
+
+  const ss = SpreadsheetApp.create('Cosmic League – Applications');
+  props.setProperty('SHEET_ID', ss.getId());
+  return ss;
+}
+
 // ── Save row to Google Sheet ───────────────────────────────────
 function saveToSheet(data) {
-  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const ss    = getSpreadsheet();
   let   sheet = ss.getSheetByName(SHEET_NAME);
 
   if (!sheet) {
@@ -70,10 +86,12 @@ function saveToSheet(data) {
     data.email      || '',
     data.reason     || '',
   ]);
+
+  return ss.getId();
 }
 
 // ── Email notification ─────────────────────────────────────────
-function sendEmailNotification(data) {
+function sendEmailNotification(data, ssId) {
   const timestamp = new Date().toLocaleString('en-GB', {
     timeZone: 'Asia/Riyadh',
     dateStyle: 'full',
@@ -92,8 +110,8 @@ function sendEmailNotification(data) {
     `Why they are seeking coaching:\n\n${data.reason || '—'}\n\n` +
     `────────────────────────────────\n` +
     `Submitted: ${timestamp}\n\n` +
-    `View all applications in Google Sheets:\n` +
-    `https://docs.google.com/spreadsheets/d/${SpreadsheetApp.getActiveSpreadsheet().getId()}`;
+    `View all applications:\n` +
+    `https://docs.google.com/spreadsheets/d/${ssId}`;
 
   MailApp.sendEmail({
     to:      NOTIFICATION_EMAIL,
